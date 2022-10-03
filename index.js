@@ -106,7 +106,7 @@ const useMove = (move, user, enemy) => {
 
 
 
-let pokemons = {}
+let pokemonInfo = {}
 let moves
 let player1Pokemon = []
 let player2Pokemon = []
@@ -129,64 +129,54 @@ const includesHTMLNode = (hTMLCollection, node) => { //would have used includes 
     }
 }
 
-const pokemonBattle = () => {
-        // const player1PokemonImage = document.createElement("img")
-        // player1PokemonImage.src = pokemon.img
-        // for (const move in moves) {
-        //     const newMove = document.createElement("h2")
-        //     newMove.textContent = moves[move].name
-        //     newMove.addEventListener("click", () => useMove(moves[move], pokemons[name], pokemons["gengar"]))
-        //     document.getElementById("player1Pokemon").append(newMove)
-        // }
-        // document.getElementById("player1Pokemon").append(player1PokemonImage)
-
-
-        // //adding enemy pokemon
-        // const player2PokemonImage = document.createElement("img")
-        // player2PokemonImage.src = pokemonList[4].img
-        // document.getElementById("player2Pokemon").append(player2PokemonImage)
-    // const attackButton = document.getElementById("attackButton")
-    // attackButton.addEventListener("click", event => {
-    //     useMove(moves.tackle, myPokemon, enemyPokemon)
-    // })
-
-    // const effectButton = document.getElementById("tailWhip")
-    // effectButton.addEventListener("click", event => {
-    //     statsChange(enemyPokemon, "defense", -1)
-    // })
+const pickingPokemon = (event, pickArray) => {
+    //adding your pokemon
+    const selectedPokemon = event.target
+    const selectedList = document.getElementById("selectedPokemon").children
+    if (selectedList.length < 3 && includesHTMLNode(pickArray.children, selectedPokemon)) {
+        document.getElementById("selectedPokemon").append(selectedPokemon)
+    } else if (includesHTMLNode(selectedList, selectedPokemon)) {
+        pickArray.append(selectedPokemon)
+    }
+    if (selectedList.length === 3) {
+        const lockInButton = document.getElementById("lockIn")
+        lockInButton.style["border-style"] = "solid"
+        lockInButton.addEventListener("click", event =>{
+            pokemonBattle()
+        })
+    }
 }
 
+const pokemonBattle = () => {
+    // const player1PokemonImage = document.createElement("img")
+    // player1PokemonImage.src = pokemon.img
+    // for (const move in moves) {
+    //     const newMove = document.createElement("h2")
+    //     newMove.textContent = moves[move].name
+    //     newMove.addEventListener("click", () => useMove(moves[move], pokemonInfo[name], pokemonInfo["gengar"]))
+    //     document.getElementById("player1Pokemon").append(newMove)
+    // }
+    // document.getElementById("player1Pokemon").append(player1PokemonImage)
+
+
+    // //adding enemy pokemon
+    // const player2PokemonImage = document.createElement("img")
+    // player2PokemonImage.src = pokemonList[4].img
+    // document.getElementById("player2Pokemon").append(player2PokemonImage)
+    // const attackButton = document.getElementById("attackButton")
+}
 
 document.addEventListener("DOMContentLoaded", event => {
     const pickArray = document.getElementById("selectPokemon")
     pokemonList.forEach(pokemon => {
         const name = Object.keys(pokemon)[0]
-        pokemons[name] = createPokemonObject(name, 50, pokemon[name])
+        pokemonInfo[name] = createPokemonObject(name, 50, pokemon[name])
         const pickPokemon = document.createElement("img")
         pickPokemon.src = pokemon.img
 
         pickArray.append(pickPokemon)
-        pickPokemon.addEventListener("click", event => {
-            //creating useful variable
-            const moves = pokemons[name].moves
-            console.log()
-            
-            //adding your pokemon
-            const selectedPokemon = event.target
-            const selectedList = document.getElementById("selectedPokemon").children
-            if (selectedList.length < 3 && includesHTMLNode(pickArray.children, selectedPokemon)) {
-                document.getElementById("selectedPokemon").append(selectedPokemon)
-            } else if (includesHTMLNode(selectedList, selectedPokemon)) {
-                pickArray.append(selectedPokemon)
-            }
-            if (selectedList.length === 3) {
-                const lockInButton = document.getElementById("lockIn")
-                lockInButton.style["border-style"] = "solid"
-                lockInButton.addEventListener("click", event =>{
-                    pokemonBattle()
-                })
-            }
-        })
+
+        pickPokemon.addEventListener("click", event => pickingPokemon(event, pickArray))
     })
 })
 
