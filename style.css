@@ -1,5 +1,4 @@
 #selectPokemon {
-    /* display: flex; */
     overflow-y: auto;
     margin: 1rem 0;
   }
@@ -9,22 +8,16 @@
   padding-top: 50px;
   bottom:30px;
   left:30%;
-  /* margin-left:auto;
-  margin-right:auto; */
 }
 
 #selectedPokemon > img{
   border-style:solid;
   border-color:red;
-  /* margin-left:auto;
-  margin-right:auto; */
 }
 
 #selectPokemon > img{
   border-style:solid;
   border-color:black;
-  /* margin-left:auto;
-  margin-right:auto; */
 }
 
 #lockIn {
@@ -32,9 +25,59 @@
   margin:auto;
   width:10%;
   border-style:dashed;
-  /* background-color: green; */
 }
 
 #lockInText {
   text-align:center;
+}
+
+#container {
+  background-color: white;
+  position:absolute;
+  margin-top:10%;
+  margin-left: 25%;
+  margin-right: 25%;
+  width: 50%;
+  height: 50%;
+  padding:10px;
+  border: 10px solid black
+}
+
+
+/* battlePage */
+.pokemon{
+height: 50%;
+}
+
+#pokemon1text {
+float:left;
+text-align: left;
+width:50%;
+height: 100%;
+}
+
+#img2 {
+position: absolute;
+height:45%;
+right:10%;
+}
+
+#pokemon2text {
+float:right;
+text-align: left;
+width:50%;
+height: 100%;
+}
+
+#img1{
+position: absolute;
+height:45%;
+left:10%;
+bottom:5%;
+}
+
+.pokemon-text {
+margin:1%;
+border:5px solid black;
+font-size: 20px;
 }

@@ -108,8 +108,6 @@ const useMove = (move, user, enemy) => {
 
 let pokemonInfo = {}
 let moves
-let player1Pokemon = []
-let player2Pokemon = []
 const pokemonList = [
     {alakazam:["calm-mind", "psychic", "psyshock", "recover"], img:"./assets/alakazam.jpg"}, 
     {blastoise:["iron-defense", "hydro-pump", "rain-dance", "aqua-tail"], img: "./assets/blastoise.jpg"}, 
@@ -129,6 +127,32 @@ const includesHTMLNode = (hTMLCollection, node) => { //would have used includes 
     }
 }
 
+const createPokemonTeam = selectedPokemon => {
+    const pokemonTeam = []
+    for (const pokemon of selectedPokemon) {
+        pokemonTeam.push(pokemonInfo[pokemon.alt])
+    }
+    return pokemonTeam
+}
+
+const createComputerTeam = unselectedPokemon => {
+    //need to generate 3 non repeating indexes
+    let indexOptions = []
+    for (let i = 0; i < unselectedPokemon.length; i++){
+        indexOptions.push(i)
+    }
+
+    const computerTeam = []
+    while (computerTeam.length < 3) {
+        const randomIndex = Math.floor(Math.random() * indexOptions.length)
+        const index = indexOptions[randomIndex]
+        computerTeam.push(pokemonInfo[unselectedPokemon[index].alt])
+        indexOptions = indexOptions.filter(number => number !== index)
+    }
+    return computerTeam
+}
+
+
 const pickingPokemon = (event, pickArray) => {
     //adding your pokemon
     const selectedPokemon = event.target
@@ -142,28 +166,51 @@ const pickingPokemon = (event, pickArray) => {
         const lockInButton = document.getElementById("lockIn")
         lockInButton.style["border-style"] = "solid"
         lockInButton.addEventListener("click", event =>{
-            pokemonBattle()
+            const player1Team = createPokemonTeam(selectedList)
+            const computerTeam = createComputerTeam(pickArray.children)
+            pokemonBattle(player1Team, computerTeam)
         })
     }
 }
 
-const pokemonBattle = () => {
-    // const player1PokemonImage = document.createElement("img")
-    // player1PokemonImage.src = pokemon.img
-    // for (const move in moves) {
-    //     const newMove = document.createElement("h2")
-    //     newMove.textContent = moves[move].name
-    //     newMove.addEventListener("click", () => useMove(moves[move], pokemonInfo[name], pokemonInfo["gengar"]))
-    //     document.getElementById("player1Pokemon").append(newMove)
-    // }
-    // document.getElementById("player1Pokemon").append(player1PokemonImage)
+const clearIndexHTML = () => {
+    document.querySelector("main").remove()
+    document.querySelector("body").append(document.createElement("main"))
+}
+
+const pokemonBattle = (userPokemon, computerPokemon) => {
+    clearIndexHTML()
+    loadBattle()
+}
+const loadBattle = () => {
+    const mainContainer = document.createElement("div")
+    mainContainer.id = "container"
+    document.querySelector("main").append(mainContainer)
+
+    const pokemon1 = document.createElement("div")
+    pokemon1.className = "pokemon"
+
+    const pokemon1IMG = document.createElement("img")
+    pokemon1IMG.src = "./assets/alakazam.jpg"
+    pokemon1IMG.id = "img1"
+
+    pokemon1.append(pokemon1IMG)
 
 
-    // //adding enemy pokemon
-    // const player2PokemonImage = document.createElement("img")
-    // player2PokemonImage.src = pokemonList[4].img
-    // document.getElementById("player2Pokemon").append(player2PokemonImage)
-    // const attackButton = document.getElementById("attackButton")
+    const textDiv1 = document.createElement("div")
+    textDiv1.id = "pokemon1text"
+    pokemon1.append(textDiv1)
+
+    const pokemon1Name = document.createElement("h3")
+    pokemon1Name.id = "pokemon1Name"
+    pokemon1Name.textContent = "Pokemon1"
+    textDiv1.append(pokemon1Name)
+
+    const pokemon2 = document.createElement("div")
+    pokemon2.className = "pokemon"
+    mainContainer.append(pokemon2)
+    mainContainer.append(pokemon1)
+
 }
 
 document.addEventListener("DOMContentLoaded", event => {
@@ -173,6 +220,8 @@ document.addEventListener("DOMContentLoaded", event => {
         pokemonInfo[name] = createPokemonObject(name, 50, pokemon[name])
         const pickPokemon = document.createElement("img")
         pickPokemon.src = pokemon.img
+        pickPokemon.alt = name
+
 
         pickArray.append(pickPokemon)
 
