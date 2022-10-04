@@ -111,6 +111,7 @@ let pokemonInfo = {}
 let moves
 let userPokemon
 let computerPokemon
+
 const pokemonList = [
     {alakazam:["calm-mind", "psychic", "psyshock", "recover"], img:"./assets/alakazam.jpg"}, 
     {blastoise:["iron-defense", "hydro-pump", "rain-dance", "aqua-tail"], img: "./assets/blastoise.jpg"}, 
@@ -193,7 +194,7 @@ const clearIndexHTML = () => {
 const pokemonBattle = () => {
     clearIndexHTML()
     loadBattle()
-    updateBattleWindow(userPokemon[0], computerPokemon[0])
+    updateBattleWindow()
     showMainSelect()
     
 }
@@ -267,7 +268,9 @@ const createNavigationContainer = () => {
     document.querySelector("main").append(navigationContainer)
 }
 
-const updateBattleWindow = (pokemon1, pokemon2) => {
+const updateBattleWindow = () => {
+    const pokemon1 = userPokemon[0]
+    const pokemon2 = computerPokemon[0]
     document.getElementById("pokemon1Name").textContent = pokemon1.name.toUpperCase()
     document.getElementById("pokemon2Name").textContent = pokemon2.name.toUpperCase()
     document.getElementById("pokemon1Level").textContent = pokemon1.level
@@ -319,7 +322,40 @@ const returnButton = () => {
     })
 }
 
+const showMoveSelect = () => {
+    createNavigationContainer()
+    const moveInfo = document.createElement("div")
+    moveInfo.id = "moveInfo"
+    document.getElementById("navContainer").append(moveInfo)
+    for (const move in userPokemon[0].moves) {
+        const pokemonMove = document.createElement("div")
+        pokemonMove.className = "pokeMove"
+        document.getElementById("navContainer").append(pokemonMove)
+
+        const moveName = document.createElement("h3")
+        moveName.className = "moveName"
+        moveName.textContent = move
+        pokemonMove.append(moveName)
+        const PP = document.createElement("p")
+        PP.className = "moveText"
+        PP.textContent = "PP: " + userPokemon[0].moves[move].pp
+        pokemonMove.append(PP)
+
+        const power = document.createElement("p")
+        power.className = "moveText"
+        power.textContent = "Power: " + userPokemon[0].moves[move].power
+        pokemonMove.append(power)
+        
+        pokemonMove.addEventListener("click", event => {
+            showMoves(move)
+        })
+
+    }
+    returnButton()
+}
+
 const showMoves = (move) => {
+    //shows the move details of a move
     const theLength = document.getElementById("moveInfo").children.length
     for (let i = 0; i < theLength; i++) {
         document.getElementById("moveInfo").children[0].remove()
@@ -358,38 +394,6 @@ const showMoves = (move) => {
     
 }
 
-const showMoveSelect = () => {
-    createNavigationContainer()
-    const moveInfo = document.createElement("div")
-    moveInfo.id = "moveInfo"
-    document.getElementById("navContainer").append(moveInfo)
-    for (const move in userPokemon[0].moves) {
-        const pokemonMove = document.createElement("div")
-        pokemonMove.className = "pokeMove"
-        document.getElementById("navContainer").append(pokemonMove)
-
-        const moveName = document.createElement("h3")
-        moveName.className = "moveName"
-        moveName.textContent = move
-        pokemonMove.append(moveName)
-        const PP = document.createElement("p")
-        PP.className = "moveText"
-        PP.textContent = "PP: " + userPokemon[0].moves[move].pp
-        pokemonMove.append(PP)
-
-        const power = document.createElement("p")
-        power.className = "moveText"
-        power.textContent = "Power: " + userPokemon[0].moves[move].power
-        pokemonMove.append(power)
-        
-        pokemonMove.addEventListener("click", event => {
-            showMoves(move)
-        })
-
-    }
-    returnButton()
-}
-
 const showSwitchSelect = () => {
     createNavigationContainer()
     for (let i = 0; i < 6; i++) {
@@ -415,9 +419,46 @@ const showSwitchSelect = () => {
             pokeHealth.textContent = userPokemon[i].hp + " HP/" + userPokemon[i].stats.hp + " HP"
             pokemonSlot.append(pokeHealth)
 
+            if (i){ //cant switch to current pokemon and current pokemon is always at index 1
+            const decisionObject = {switch:userPokemon[i].name}
+            pokemonSlot.addEventListener("click", event => battleEventOrder(decisionObject))
+            }
         }
     }
     returnButton()
+}
+
+// const computerAI = () => {
+//     //currently only selects a random move (disregarded of PP)
+//     const randomNumber = Math.floor(Math.random()*4)
+//     let index = 0
+//     for (const key in computerPokemon[0].moves) {
+//         if (index === randomNumber) {
+
+//         }
+//     }
+// }
+
+displayEvent = string => {
+    console.log(string)
+}
+
+battleEventOrder = (userDecision) => {
+    //activate if players switched pokemon
+    //activate weather effect
+    //activate condition effect
+    //activate status effect
+    //activate move for both players
+    //activate pokemon switch if pokemon dies or show victory if no more pokemon
+
+
+    if (userDecision.switch) {
+        displayEvent("User switched to " + userDecision.switch)
+        const index = userPokemon.findIndex(pokemon => pokemon.name === userDecision.switch)
+        const pokemonObject = userPokemon.splice(index, 1)
+        userPokemon.unshift(pokemonObject[0])
+        updateBattleWindow()
+    }
 }
 
 document.addEventListener("DOMContentLoaded", event => {
