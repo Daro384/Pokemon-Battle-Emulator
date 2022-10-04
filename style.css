@@ -34,7 +34,7 @@
 #container {
   background-color: white;
   position:absolute;
-  margin-top:10%;
+  margin-top:5%;
   margin-left: 25%;
   margin-right: 25%;
   width: 50%;
@@ -43,33 +43,45 @@
   border: 10px solid black
 }
 
+#navContainer {
+  background-color: white;
+  position:absolute;
+  margin-top:35%;
+  margin-left: 25%;
+  margin-right: 25%;
+  width: 50%;
+  height: 20%;
+  padding:10px;
+  border: 10px solid black
+}
+
 
 /* battlePage */
 .pokemon{
-height: 50%;
+height: 45%;
 }
 
-#pokemon1text {
+#pokemon2text {
 float:left;
 text-align: left;
 width:50%;
 height: 100%;
 }
 
-#img2 {
+#pokemon2IMG {
 position: absolute;
 height:45%;
 right:10%;
 }
 
-#pokemon2text {
+#pokemon1text {
 float:right;
 text-align: left;
 width:50%;
 height: 100%;
 }
 
-#img1{
+#pokemon1IMG {
 position: absolute;
 height:45%;
 left:10%;
@@ -80,4 +92,98 @@ bottom:5%;
 margin:1%;
 border:5px solid black;
 font-size: 20px;
+}
+
+/* #navContainer {
+  float:left;
+} */
+
+#fightButton {
+  border: 2px solid black;
+  float:left;
+  height: 100%;
+  width: 45%;
+  background-color: greenyellow;
+}
+
+#switchButton {
+  border: 2px solid black;
+  float:left;
+  margin-left:8%;
+  height:100%;
+  width: 45%;
+  background-color: red;
+}
+
+.switchPokemon {
+  border: 2px solid black;
+  margin:2px;
+  float:left;
+  height: 100%;
+  width:13%;
+}
+
+h2 {
+  margin-top: 20%;
+  text-align:center;
+  font-size: 30px;
+}
+
+.slotImage {
+  position:absolute;
+  width:12.5%;
+  height:40%;
+}
+
+.slotName {
+  text-align: center;
+  margin-top: 100px;
+  font-size: 20px;
+}
+
+.slotHP {
+  text-align: center;
+  font-size: 16px;
+}
+
+.returnButton {
+  background-color: red;
+}
+
+#returnText {
+  margin-top: 80px;
+  text-align: center;
+  font-size:20px;
+}
+
+#moveInfo {
+  border: 2px solid black;
+  margin:2px;
+  float:left;
+  height: 100%;
+  width:30%;
+}
+
+.pokeMove {
+  border: 2px solid black;
+  margin:2px;
+  float:left;
+  height: 100%;
+  width:12%;
+}
+
+.moveName {
+  margin-top: 30%;
+  text-align:center;
+  font-size: 15px;
+}
+.moveText {
+  text-align:center;
+  font-size: 15px;
+}
+
+.detailText {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 0;
 }

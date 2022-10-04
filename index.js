@@ -40,7 +40,7 @@ const initializeMoves = (moveList) => {
     return allowedMoves
 }
 
-const createPokemonObject = (name, level, moves) => {
+const createPokemonObject = (name, level, moves, sourceIMG) => {
     const EV = 85
     const IV = 31
     const pokemonObject = {name:name, level:level, stats:{}}
@@ -49,7 +49,7 @@ const createPokemonObject = (name, level, moves) => {
         pokemon.stats.forEach(value => {
             pokemonObject.stats[value.stat.name] = statCalculator(value.base_stat, IV, EV, level, value.stat.name)
         })
-
+        pokemonObject["hp"] = pokemonObject.stats["hp"]
         pokemonObject["type"] = pokemon.types.map(type => type.type.name)
         
         //adding stat stages
@@ -66,6 +66,7 @@ const createPokemonObject = (name, level, moves) => {
         //adding More Stats
         pokemonObject["IV"] = IV
         pokemonObject["EV"] = EV
+        pokemonObject["img"] = sourceIMG
         
     })  
     return pokemonObject
@@ -108,6 +109,8 @@ const useMove = (move, user, enemy) => {
 
 let pokemonInfo = {}
 let moves
+let userPokemon
+let computerPokemon
 const pokemonList = [
     {alakazam:["calm-mind", "psychic", "psyshock", "recover"], img:"./assets/alakazam.jpg"}, 
     {blastoise:["iron-defense", "hydro-pump", "rain-dance", "aqua-tail"], img: "./assets/blastoise.jpg"}, 
@@ -166,66 +169,268 @@ const pickingPokemon = (event, pickArray) => {
         const lockInButton = document.getElementById("lockIn")
         lockInButton.style["border-style"] = "solid"
         lockInButton.addEventListener("click", event =>{
-            const player1Team = createPokemonTeam(selectedList)
-            const computerTeam = createComputerTeam(pickArray.children)
-            pokemonBattle(player1Team, computerTeam)
+            userPokemon = createPokemonTeam(selectedList)
+            computerPokemon = createComputerTeam(pickArray.children)
+            pokemonBattle(userPokemon, computerPokemon)
         })
     }
+}
+//replaces a word in a string that's in between $ and % -> replace("hello $name%", Daro) => "hello Daro"
+//used to deal with some returned api strings
+const replace = (string, word) => { 
+    if (string.split("").includes("$")){
+    const firstHalf = string.split("$")
+    const secondHalf = firstHalf[1].split("%")
+    secondHalf[0] = word
+    return [firstHalf[0], ...secondHalf].join("")
+    } else return string
 }
 
 const clearIndexHTML = () => {
     document.querySelector("main").remove()
     document.querySelector("body").append(document.createElement("main"))
 }
-
-const pokemonBattle = (userPokemon, computerPokemon) => {
+const pokemonBattle = () => {
     clearIndexHTML()
     loadBattle()
+    updateBattleWindow(userPokemon[0], computerPokemon[0])
+    showMainSelect()
+    
 }
 const loadBattle = () => {
     const mainContainer = document.createElement("div")
     mainContainer.id = "container"
     document.querySelector("main").append(mainContainer)
 
+    const pokemon2 = document.createElement("div")
+    pokemon2.className = "pokemon"
+
+    const textDiv2 = document.createElement("div")
+    textDiv2.id = "pokemon2text"
+    textDiv2.className = "pokemon-text"
+    pokemon2.append(textDiv2)
+
+    const pokemon2Name = document.createElement("h3")
+    pokemon2Name.textContent = "pokemon2"
+    pokemon2Name.id = "pokemon2Name"
+    textDiv2.append(pokemon2Name)
+
+    const pokemon2Level = document.createElement("p")
+    pokemon2Level.textContent = "LV 50"
+    pokemon2Level.id = "pokemon2Level"
+    textDiv2.append(pokemon2Level)
+
+    const pokemon2HP = document.createElement("p")
+    pokemon2HP.textContent = "HP: 123/123"
+    pokemon2HP.id = "pokemon2HP"
+    textDiv2.append(pokemon2HP)
+
+    const pokemon2IMG = document.createElement("img")
+    pokemon2IMG.src = "./assets/alakazam.jpg"
+    pokemon2IMG.id = "pokemon2IMG"
+    pokemon2.append(pokemon2IMG)
+
     const pokemon1 = document.createElement("div")
     pokemon1.className = "pokemon"
 
-    const pokemon1IMG = document.createElement("img")
-    pokemon1IMG.src = "./assets/alakazam.jpg"
-    pokemon1IMG.id = "img1"
-
-    pokemon1.append(pokemon1IMG)
-
-
     const textDiv1 = document.createElement("div")
     textDiv1.id = "pokemon1text"
+    textDiv1.className = "pokemon-text"
     pokemon1.append(textDiv1)
 
     const pokemon1Name = document.createElement("h3")
+    pokemon1Name.textContent = "pokemon1"
     pokemon1Name.id = "pokemon1Name"
-    pokemon1Name.textContent = "Pokemon1"
     textDiv1.append(pokemon1Name)
 
-    const pokemon2 = document.createElement("div")
-    pokemon2.className = "pokemon"
+    const pokemon1Level = document.createElement("p")
+    pokemon1Level.textContent = "LV 50"
+    pokemon1Level.id = "pokemon1Level"
+    textDiv1.append(pokemon1Level)
+
+    const pokemon1HP = document.createElement("p")
+    pokemon1HP.textContent = "HP: 123/123"
+    pokemon1HP.id = "pokemon1HP"
+    textDiv1.append(pokemon1HP)
+
+    const pokemon1IMG = document.createElement("img")
+    pokemon1IMG.src = "./assets/alakazam.jpg"
+    pokemon1IMG.id = "pokemon1IMG"
+    pokemon1.append(pokemon1IMG)
+
     mainContainer.append(pokemon2)
     mainContainer.append(pokemon1)
+}
+const createNavigationContainer = () => {
+    const navigationContainer = document.createElement("div")
+    navigationContainer.id = "navContainer"
+    document.querySelector("main").append(navigationContainer)
+}
 
+const updateBattleWindow = (pokemon1, pokemon2) => {
+    document.getElementById("pokemon1Name").textContent = pokemon1.name.toUpperCase()
+    document.getElementById("pokemon2Name").textContent = pokemon2.name.toUpperCase()
+    document.getElementById("pokemon1Level").textContent = pokemon1.level
+    document.getElementById("pokemon2Level").textContent = pokemon2.level
+    document.getElementById("pokemon1IMG").src = pokemon1.img
+    document.getElementById("pokemon1IMG").alt = pokemon1.name
+    document.getElementById("pokemon2IMG").src = pokemon2.img
+    document.getElementById("pokemon2IMG").alt = pokemon2.name
+    document.getElementById("pokemon1HP").textContent = pokemon1.hp + " HP/" + pokemon1.stats.hp + " HP"
+    document.getElementById("pokemon2HP").textContent = pokemon2.hp + " HP/" + pokemon2.stats.hp + " HP"
+}
+
+const showMainSelect = () => {
+    createNavigationContainer()
+    const fightButton = document.createElement("div")
+    fightButton.id = "fightButton"
+    document.getElementById("navContainer").append(fightButton)
+    const fightText = document.createElement("h2")
+    fightText.textContent = "FIGHT"
+    fightButton.append(fightText)
+    fightButton.addEventListener("click", event => {
+        document.getElementById("navContainer").remove()
+        showMoveSelect()
+    })
+
+    const switchButton = document.createElement("div")
+    switchButton.id = "switchButton"
+    document.getElementById("navContainer").append(switchButton)
+    const switchText = document.createElement("h2")
+    switchText.textContent = "SWITCH"
+    switchButton.append(switchText)
+    switchButton.addEventListener("click", event => {
+        document.getElementById("navContainer").remove()
+        showSwitchSelect()
+    })
+}
+
+const returnButton = () => {
+    const returnSlot = document.createElement("div")
+    const returnText = document.createElement("p")
+    returnSlot.className = "switchPokemon returnButton"
+    returnText.textContent = "Return"
+    returnText.id = "returnText"
+    returnSlot.append(returnText)
+    document.getElementById("navContainer").append(returnSlot)
+    returnSlot.addEventListener("click", event => {
+        document.getElementById("navContainer").remove()
+        showMainSelect()
+    })
+}
+
+const showMoves = (move) => {
+    const theLength = document.getElementById("moveInfo").children.length
+    for (let i = 0; i < theLength; i++) {
+        document.getElementById("moveInfo").children[0].remove()
+    }
+    const moveNameDetail  = document.createElement("h3")
+    const ppDetail        = document.createElement("p")
+    const typeDetails     = document.createElement("p")
+    const powerDetails    = document.createElement("p")
+    const accuracyDetails = document.createElement("p")
+    const effectText      = document.createElement("p")
+    moveNameDetail .className = "detailText"
+    ppDetail       .className = "detailText"
+    typeDetails    .className = "detailText"
+    powerDetails   .className = "detailText"
+    accuracyDetails.className = "detailText"
+    effectText     .className = "detailText"
+    moveNameDetail.textContent = move
+    ppDetail.textContent = "PP: " + userPokemon[0].moves[move].pp
+    typeDetails.textContent = "Type:" + userPokemon[0].moves[move].type
+    if (userPokemon[0].moves[move].power){
+        powerDetails.textContent = "Power: " + userPokemon[0].moves[move].power + userPokemon[0].moves[move].damageClass
+    }
+    if (userPokemon[0].moves[move].accuracy){
+        accuracyDetails.textContent = "Accuracy: " + userPokemon[0].moves[move].accuracy
+    }
+    const effect = userPokemon[0].moves[move].effect
+    const effectChance = userPokemon[0].moves[move].effectChance + "%"
+    effectText.textContent = replace(effect, effectChance)
+    moveInfo.append(moveNameDetail )
+    moveInfo.append(ppDetail       )
+    moveInfo.append(typeDetails    )
+    moveInfo.append(powerDetails   )
+    moveInfo.append(accuracyDetails)
+    moveInfo.append(effectText     )
+    moveInfo.style.backgroundColor = "greenyellow"
+    
+}
+
+const showMoveSelect = () => {
+    createNavigationContainer()
+    const moveInfo = document.createElement("div")
+    moveInfo.id = "moveInfo"
+    document.getElementById("navContainer").append(moveInfo)
+    for (const move in userPokemon[0].moves) {
+        const pokemonMove = document.createElement("div")
+        pokemonMove.className = "pokeMove"
+        document.getElementById("navContainer").append(pokemonMove)
+
+        const moveName = document.createElement("h3")
+        moveName.className = "moveName"
+        moveName.textContent = move
+        pokemonMove.append(moveName)
+        const PP = document.createElement("p")
+        PP.className = "moveText"
+        PP.textContent = "PP: " + userPokemon[0].moves[move].pp
+        pokemonMove.append(PP)
+
+        const power = document.createElement("p")
+        power.className = "moveText"
+        power.textContent = "Power: " + userPokemon[0].moves[move].power
+        pokemonMove.append(power)
+        
+        pokemonMove.addEventListener("click", event => {
+            showMoves(move)
+        })
+
+    }
+    returnButton()
+}
+
+const showSwitchSelect = () => {
+    createNavigationContainer()
+    for (let i = 0; i < 6; i++) {
+        const pokemonSlot = document.createElement("div")
+        pokemonSlot.id = "pokemonSlot" + i
+        pokemonSlot.className = "switchPokemon"
+        document.getElementById("navContainer").append(pokemonSlot)
+
+        if (userPokemon[i]){
+            const pokemonIMG = document.createElement("img")
+            pokemonIMG.className = "slotImage"
+            pokemonIMG.src = userPokemon[i].img
+            pokemonIMG.alt = userPokemon[i].name
+            pokemonSlot.append(pokemonIMG)
+
+            const pokeName = document.createElement("p")
+            pokeName.className = "slotName"
+            pokeName.textContent = userPokemon[i].name
+            pokemonSlot.append(pokeName)
+
+            const pokeHealth = document.createElement("p")
+            pokeHealth.className = "slotHP"
+            pokeHealth.textContent = userPokemon[i].hp + " HP/" + userPokemon[i].stats.hp + " HP"
+            pokemonSlot.append(pokeHealth)
+
+        }
+    }
+    returnButton()
 }
 
 document.addEventListener("DOMContentLoaded", event => {
     const pickArray = document.getElementById("selectPokemon")
     pokemonList.forEach(pokemon => {
         const name = Object.keys(pokemon)[0]
-        pokemonInfo[name] = createPokemonObject(name, 50, pokemon[name])
+        pokemonInfo[name] = createPokemonObject(name, 50, pokemon[name], pokemon.img)
         const pickPokemon = document.createElement("img")
         pickPokemon.src = pokemon.img
         pickPokemon.alt = name
-
 
         pickArray.append(pickPokemon)
 
         pickPokemon.addEventListener("click", event => pickingPokemon(event, pickArray))
     })
 })
-
