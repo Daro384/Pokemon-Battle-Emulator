@@ -449,14 +449,17 @@ const battleEventOrder = async userDecision => {
                 computerPokemon.push(computerPokemon[0]) 
                 computerPokemon.splice(0,1) //rotates computers pokemon
                 if (computerPokemon[0].hp <= 0) {
-                    textEvent.push("Computer ran out of pokemon. YOU WIN!") 
-                    return
+                    await displayEvent()
+                    endScreen("Computer ran out of pokemon. YOU WIN! ") 
+                    return true
                 } else textEvent.push("Computer sent out " + computerPokemon[0].name)
 
             } 
             else if (userPokemon[0].hp <= 0) {
                 if (lostCheck()) { //if all pokemon are dead
-                    textEvent.push("you ran out of pokemon. YOU LOSE!")
+                    await displayEvent()
+                    endScreen("you ran out of pokemon. YOU LOSE! ")
+                    return true
                 } else { //if only current pokemon dies
                     showSwitch = true
                 }
@@ -467,8 +470,8 @@ const battleEventOrder = async userDecision => {
         updateBattleWindow()
     }
     
-    await moveTurn(fasterPokemon, slowerPokemon, fasterMove)
-    await moveTurn(slowerPokemon, fasterPokemon, slowerMove)
+    if (await moveTurn(fasterPokemon, slowerPokemon, fasterMove)) return //moveTurn will only return true if game ends!!!
+    if (await moveTurn(slowerPokemon, fasterPokemon, slowerMove)) return //return to exit out of battle loop
 
     if (showSwitch) {
         showSwitchSelect()

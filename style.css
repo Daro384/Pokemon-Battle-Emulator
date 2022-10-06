@@ -193,3 +193,10 @@ h2 {
   margin-top: 60px;
   font-size: 30px
 }
+
+#lastDiv {
+  margin-top:20%;
+  margin:auto;
+  text-align:center;
+  font-size:40px;
+}
