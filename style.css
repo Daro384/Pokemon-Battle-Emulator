@@ -63,7 +63,7 @@ height: 45%;
 
 #pokemon2text {
 float:left;
-text-align: left;
+text-align: center;
 width:50%;
 height: 100%;
 }
@@ -76,7 +76,7 @@ right:10%;
 
 #pokemon1text {
 float:right;
-text-align: left;
+text-align: center;
 width:50%;
 height: 100%;
 }

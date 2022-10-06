@@ -1,5 +1,3 @@
-
-
 //global variables
 let damageRelation = {}
 let pokemonInfo = {}
@@ -8,6 +6,8 @@ let moves
 let userPokemon
 let computerPokemon
 let weather
+let critChance = 1/24
+let damage
 
 
 const statCalculator = (base, IV, EV, level, stat) => {
@@ -39,6 +39,7 @@ const initializeMoves = (moveList) => {
                 effect: returnedMove.effect_entries[0].short_effect,
                 target: returnedMove.target.name
             }
+
             returnedMove["stat_changes"].forEach(change => {
                 allowedMoves[name].statChanges.push({
                     target: returnedMove.target.name,
@@ -99,13 +100,11 @@ const createPokemonObject = (name, level, moves, sourceIMG) => {
         pokemonObject["IV"] = IV
         pokemonObject["EV"] = EV
         pokemonObject["img"] = sourceIMG
+        pokemonObject["status"] = {}
+        pokemonObject["condition"]
         
     })  
     return pokemonObject
-}
-
-const stageMultiplier = stage => {
-    return (stage >= 0 ? 1+0.5*stage : 1/(1+0.5*Math.abs(stage))) 
 }
 
 const typeEfficiency = (move, receiverTypes) => {
@@ -121,46 +120,142 @@ const typeEfficiency = (move, receiverTypes) => {
     return multiplier
 }
 
-const useMove = async (move, user, enemy) => {
-    textEvent.push(`${user.name} used ${move.name}`)
-    if (move.power) {
+//if Ignore is set to true it will overwrite current status effect (only effects like rest sets this effect to true)
+const applyStatus = (targetObject, statusName, turns, ignore = false) => { 
+    if (!targetObject.status["name"] || ignore) {
+        targetObject.status["name"] = statusName
+        if (statusName === "sleep"){
+            if (!turns) turns = (Math.ceil(Math.random() * 4) + 1) //if turns is omitted then randomly assign 2-5 turns
+            else targetObject.status["turns"] = turns
+        }
+    } else textEvent.push(`applying ${statusName} failed`)
+}
 
-        const damageType = damageClass => damageClass === "special" ? "special-" : "" //quick check to see if we should use special attack and special defense
-        const attack = user.stats[damageType(move.damageClass) + "attack"] * stageMultiplier(user["stat-stages"][damageType(move.damageClass) + "attack"])
-        const defense = enemy.stats[damageType(move.damageClass) + "defense"] * stageMultiplier(enemy["stat-stages"][damageType(move.damageClass) + "defense"])
+const heal = (healthPercent, userObject) => {
+    if (userObject.hp !== userObject.stats.hp) {
+        userObject.hp += Math.ceil(userObject.stats.hp * healthPercent/100)
+        if (userObject.hp > userObject.stats.hp) {
+            userObject.hp = userObject.stats.hp
+            textEvent.push(`${userObject.name} fully restored their HP`)
+        } else {
+            textEvent.push(`${userObject.name} restored some HP`)
+        }
+    } else textEvent.push(`${userObject.name} is already at max HP`)
+}
 
-        const effectiveness = typeEfficiency(move.type, enemy.type)
-        
-        let stab = 1
-        if (user.type.find(type => type === move.type)) stab = 1.5 //if move has the same type as your pokemon, do 50% more damage
-        
-        let damage = (((2*user.level/5 + 2) * move.power * attack/defense)/50 + 2) //base damage
-        damage *= stab * effectiveness //adding multipliers to damage
-        enemy.hp -= Math.ceil(damage)
-    }
-
-    for (const statChange of move.statChanges) { 
-        const target = (statChange.target === "user" ? user : enemy)
-        const stat = statChange.stat
-        const stages = statChange.stages
-        target["stat-stages"][stat] += stages 
-        if (target["stat-stages"][stat] >  6) target["stat-stages"][stat] = 6
-        if (target["stat-stages"][stat] < -6) target["stat-stages"][stat] = -6
+const lifeSteal = (lifeStealPercent, userObject) => {
+    if (userObject.hp !== userObject.stats.hp) {
+        userObject.hp += Math.ceil(damage * lifeStealPercent/100) //damage received from global variable
+        if (userObject.hp > userObject.stats.hp) {
+            userObject.hp = userObject.stats.hp
+        }
+        textEvent.push(`${userObject.name} restored some HP`)
     }
 }
 
-const pokemonList = [
-    {alakazam:["calm-mind", "psychic", "psyshock", "recover"], img:"./assets/alakazam.jpg"}, 
+const recoil = (recoilPercent, userObject) => {
+    userObject.hp -= Math.ceil(damage * recoilPercent/100)
+}
+
+const stageMultiplier = stage => { //calculates the stat multiplier based on your stat stage
+    return (stage >= 0 ? 1+0.5*stage : 1/(1+0.5*Math.abs(stage))) 
+}
+
+const calculateDamage = (move, userObject, targetObject) => {
+    const damageType = damageClass => damageClass === "special" ? "special-" : "" //quick check to see if we should use special attack and special defense
+    const attack = userObject.stats[damageType(move.damageClass) + "attack"] * stageMultiplier(userObject["stat-stages"][damageType(move.damageClass) + "attack"])
+    const defense = targetObject.stats[damageType(move.damageClass) + "defense"] * stageMultiplier(targetObject["stat-stages"][damageType(move.damageClass) + "defense"])
+    damage = (((2*userObject.level/5 + 2) * move.power * attack/defense)/50 + 2) //base damage
+    return damage
+}
+
+const calculateDamageMultipliers = (move, userObject, targetObject) => {
+    const effectiveness = typeEfficiency(move.type, targetObject.type)
+    
+    let stab = 1
+    if (userObject.type.find(type => type === move.type)) stab = 1.5 //if move has the same type as your pokemon, do 50% more damage
+    
+    let critMultiplier = 1
+    if (Math.random() < critChance) {
+        critMultiplier = 2
+        textEvent.push("It was a critical hit")
+    }
+    let burn
+    (move.damageClass === "physical" && userObject.status.name === "burn") ? burn = 0.5 : burn = 1
+    return stab * effectiveness * critMultiplier * burn
+}
+
+const applyStatChanges = (move, userObject, targetObject) => { 
+    const statChangeText = statChange => {
+        if (statChange > 1) return "sharply rose"
+        if (statChange === 1) return "rose"
+        if (statChange === -1) return "fell"
+        if (statChange < -1) return "sharply fell"
+        return ""
+    }
+    for (const statChange of move.statChanges) {
+
+        if (move.effectChance) {
+            if (Math.random() > move.effectChance/100) return
+        }
+        let target = (statChange.target === "user" ? userObject : targetObject)
+        const stat = statChange.stat
+        const stages = statChange.stages
+        
+        if (move.name === "hammer-arm") target = userObject //preventing this move from unintentionally lowering enemy speed
+
+        target["stat-stages"][stat] += stages 
+        textEvent.push(`${target.name} ${stat} ${statChangeText(stages)}`)
+        if (target["stat-stages"][stat] >  6) {
+            target["stat-stages"][stat] = 6
+            textEvent.push(`${target.name} ${stat} is maxed out`)
+        }
+        if (target["stat-stages"][stat] < -6) {
+            target["stat-stages"][stat] = -6
+            textEvent.push(`${target.name} ${stat} is minimized`)
+        }
+    }
+}
+
+
+const useMove = async (move, user, enemy) => {
+    damage = 0
+    critChance = 1/24
+
+    textEvent.push(`${user.name} used ${move.name}`)
+    if (move.accuracy) { //checking if the move has accuracy or not (some has no accuracy and return null instead)
+        if (Math.random() > move.accuracy/100) {
+            textEvent.push("The attack missed")
+            return 
+        }
+    }
+    
+    if (move.power) {//checking if the power is not null
+        damage = calculateDamage(move, user, enemy) //calculating damage
+        damage *= calculateDamageMultipliers(move, user, enemy)
+    }
+
+    applyStatChanges(move, user, enemy) //applying stat changes from moves
+
+    moveEffectObject[move.name](move, user, enemy) //applying potential unique effects
+
+    enemy.hp -= Math.ceil(damage) //apply the damage to the targets health
+
+}
+
+const pokemonList = [ 
+    {alakazam: ["calm-mind", "psychic", "psyshock", "recover"],           img:"./assets/alakazam.jpg"}, 
     {blastoise:["iron-defense", "hydro-pump", "rain-dance", "aqua-tail"], img: "./assets/blastoise.jpg"}, 
     {charizard:["flare-blitz", "inferno", "dragon-breath", "scary-face"], img: "./assets/charizard.jpg"},
-    {gardevoir:["calm-mind", "hypnosis", "dream-eater", "psychic"], img: "./assets/gardevoir.jpg"},
-    {gengar:["shadow-ball", "sludge-bomb", "curse", "dark-pulse"], img: "./assets/gengar.jpg"},
-    {gyarados:["dragon-dance", "thrash", "aqua-tail", "crunch"], img: "./assets/gyarados.jpg"},
-    {machamp:["double-edge", "cross-chop", "bulk-up", "revenge"], img: "./assets/machamp.jpg"},
-    {snorlax:["rest", "belly-drum", "body-slam", "block"], img: "./assets/snorlax.jpg"},
-    {venusaur:["solar-beam", "synthesis", "seed-bomb", "sleep-powder"], img: "./assets/venusaur.jpg"},
-    {walrein:["hail", "blizzard", "brine", "rest"], img: "./assets/walrein.jpg"},
+    {gardevoir:["calm-mind", "hypnosis", "dream-eater", "psychic"],       img: "./assets/gardevoir.jpg"},
+    {gengar:   ["shadow-ball", "sludge-bomb", "curse", "dark-pulse"],     img: "./assets/gengar.jpg"},
+    {gyarados: ["dragon-dance", "thrash", "aqua-tail", "crunch"],         img: "./assets/gyarados.jpg"},
+    {machamp:  ["double-edge", "cross-chop", "bulk-up", "revenge"],       img: "./assets/machamp.jpg"},
+    {snorlax:  ["rest", "belly-drum", "body-slam", "hammer-arm"],         img: "./assets/snorlax.jpg"},
+    {venusaur: ["solar-beam", "synthesis", "seed-bomb", "sleep-powder"],  img: "./assets/venusaur.jpg"},
+    {walrein:  ["hail", "blizzard", "brine", "rest"],                     img: "./assets/walrein.jpg"},
 ]
+
 
 const createPokemonTeam = selectedPokemon => {
     const pokemonTeam = []
@@ -238,20 +333,60 @@ const lostCheck = () => {
     
 }
 
-const statusEffect = pokemonObject => {
-    //does Something
+const statusEffect = (pokemonObject, move) => {
+    //status effects are: sleep, freeze, paralysis, burn, poison, badly poison
+    switch (pokemonObject.status.name) {
+        case "sleep":
+            pokemonObject.status.turns--
+            if (pokemonObject.status.turns === 0) {
+                pokemonObject["skipTurn"] = false
+                textEvent.push(pokemonObject.name +" woke up")
+                pokemonObject.status.name = ""
+            } else {
+                pokemonObject["skipTurn"] = true
+                textEvent.push(pokemonObject.name +" is fast asleep")
+            }
+            break
+        case "freeze":
+            if (Math.random() <= 0.2 || move.name === "flare-blitz") {
+                textEvent.push(pokemonObject.name +" thawed out")
+                pokemonObject["skipTurn"] = false
+                pokemonObject.status = {}
+            } else {
+                pokemonObject["skipTurn"] = true
+                textEvent.push(pokemonObject.name +" is frozen solid")
+            }
+            break
+        case "paralysis": 
+            if (Math.random() <= 0.25) {
+                textEvent.push(pokemonObject.name +" is paralyzed and can't move")
+                pokemonObject["skipTurn"] = true
+            }
+            break
+        case "burn": 
+            let damage = Math.ceil(pokemonObject.stats.hp / 16)
+            pokemonObject.hp -= damage
+            textEvent.push(pokemonObject.name +" is hurt from burn")
+            break
+        case "poison": 
+            damage = Math.ceil(pokemonObject.stats.hp / 16)
+            pokemonObject.hp -= damage
+            textEvent.push(pokemonObject.name +" is hurt from poison")
+            break
+        case "badlyPoison":
+            damage = Math.ceil(pokemonObject.stats.hp * pokemonObject.status.stacks / 16)
+            pokemonObject.hp -= damage
+            pokemonObject.status.stacks ++
+            textEvent.push(pokemonObject.name +" is hurt from poison")
+            break
+    }
 }
+
 const conditionEffect = pokemonObject => {
     //does something
 }
 
 const battleEventOrder = async userDecision => {
-    //activate if players switched pokemon
-    //activate weather effect
-    //check which pokemon has priority
-    //activate condition effect
-    //activate status effect
-    //activate move for both players
     //activate pokemon switch if pokemon dies or show victory if no more pokemon
     const computerMove = computerAI()
 
@@ -300,10 +435,13 @@ const battleEventOrder = async userDecision => {
     
     const moveTurn = async (pokemonUser, targetPokemon, move) => {
         if (!move) return
-        statusEffect(pokemonUser)
+        statusEffect(pokemonUser, move)
         conditionEffect(pokemonUser)
-        
-        await useMove(move, pokemonUser, targetPokemon)
+        if (!pokemonUser.skipTurn){
+            await useMove(move, pokemonUser, targetPokemon)
+            pokemonUser.skipTurn = false
+        }
+
         if (targetPokemon.hp <= 0) {
             slowerMove = false //stopping dead pokemon from using move
             textEvent.push(`${targetPokemon.name} fainted`)
