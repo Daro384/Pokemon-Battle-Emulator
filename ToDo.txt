@@ -1,0 +1,10 @@
+effects I should code 
+    1. conditions
+    2. flinch
+    3. weather
+    4. forced repeat move
+    5. delayed moves/effects
+
+things I can fix but i simply don't think it is worth the effort
+    1. the double crit bug (triggered when recalculating damage)
+    2. overkill damage should not account for recoil and life Steal
