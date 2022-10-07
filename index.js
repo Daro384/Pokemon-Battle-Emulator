@@ -644,8 +644,46 @@ document.addEventListener("DOMContentLoaded", event => {
         
         pickArray.append(pickPokemon)
         pickPokemon.addEventListener("click", event => pickingPokemon(event, pickArray)) 
+        
         pickPokemon.addEventListener("mouseover", event => {
-            console.log(pokemonInfo[Object.keys(pokemon)[0]].name)
+            const nameA= pokemonInfo[Object.keys(pokemon)[0]].name
+            const attack = pokemonInfo[Object.keys(pokemon)[0]].stats.attack
+            const defense= pokemonInfo[Object.keys(pokemon)[0]].stats.defense
+            const specialAttack= pokemonInfo[Object.keys(pokemon)[0]].stats['special-attack']
+            const specialDefense= pokemonInfo[Object.keys(pokemon)[0]].stats['special-defense']
+            const speed = pokemonInfo[Object.keys(pokemon)[0]].stats.speed
+            const ev= pokemonInfo[Object.keys(pokemon)[0]].EV
+            const iv = pokemonInfo[Object.keys(pokemon)[0]].IV
+            
+
+            const nameBar= document.getElementById("nameA")
+            nameBar.textContent= nameA
+
+            const evBar = document.getElementById("ev")
+            evBar.textContent= "EV: " + ev
+
+            const ivBar= document.getElementById("iv")
+            ivBar.textContent= "IV: " + iv
+
+            const attackBar= document.getElementById("attack")
+            attackBar.textContent= "Attcak: " + attack
+
+            const defenseBar= document.getElementById("defense")
+            defenseBar.textContent= "Defense: " + defense 
+
+            const specialAttackBar= document.getElementById("special-attack")
+            specialAttackBar.textContent= "Special Attack: " + specialAttack
+
+            const specialDefenseBar= document.getElementById("special-defense")
+            specialDefenseBar.textContent= "Special Defense: "  + specialDefense 
+
+            const speedBar= document.getElementById("speed")
+            speedBar.textContent= "Speed: " + speed
+   
+        })
+        
         })
     })
-})
+    
+
+
