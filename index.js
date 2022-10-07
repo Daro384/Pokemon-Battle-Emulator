@@ -652,22 +652,25 @@ document.addEventListener("DOMContentLoaded", event => {
             const specialAttack= pokemonInfo[Object.keys(pokemon)[0]].stats['special-attack']
             const specialDefense= pokemonInfo[Object.keys(pokemon)[0]].stats['special-defense']
             const speed = pokemonInfo[Object.keys(pokemon)[0]].stats.speed
-            const ev= pokemonInfo[Object.keys(pokemon)[0]].EV
-            const iv = pokemonInfo[Object.keys(pokemon)[0]].IV
+            const moves= Object.keys(pokemonInfo[Object.keys(pokemon)[0]].moves).join(', ')
+            const hp = pokemonInfo[Object.keys(pokemon)[0]].stats.hp
             
 
             const nameBar= document.getElementById("nameA")
             nameBar.textContent= nameA
 
             const evBar = document.getElementById("moves")
-            evBar.textContent= "Moves: " + Object.keys(pokemonInfo[Object.keys(pokemon)[0]].moves).join(', ')
+            evBar.textContent= "Moves: " + moves
 
 
             const attackBar= document.getElementById("attack")
-            attackBar.textContent= "Attcak: " + attack
+            attackBar.textContent= "Attack: " + attack
 
             const defenseBar= document.getElementById("defense")
             defenseBar.textContent= "Defense: " + defense 
+
+            const hpBar= document.getElementById("hp")
+            hpBar.textContent= "HP: " + hp
 
             const specialAttackBar= document.getElementById("special-attack")
             specialAttackBar.textContent= "Special Attack: " + specialAttack
@@ -677,11 +680,8 @@ document.addEventListener("DOMContentLoaded", event => {
 
             const speedBar= document.getElementById("speed")
             speedBar.textContent= "Speed: " + speed
-
-            console.log(pokemonInfo[Object.keys(pokemon)[0]].moves)
    
         })
-        
         })
     })
     
