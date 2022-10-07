@@ -659,8 +659,8 @@ document.addEventListener("DOMContentLoaded", event => {
             const nameBar= document.getElementById("nameA")
             nameBar.textContent= nameA
 
-            const evBar = document.getElementById("moves")
-            evBar.textContent= "Moves: " + moves
+            const moveBar = document.getElementById("moves")
+            moveBar.textContent= "Moves: " + moves
 
 
             const attackBar= document.getElementById("attack")
