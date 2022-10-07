@@ -1,7 +1,7 @@
 effects I should code 
-    1. conditions
+    1. conditions //done
     2. flinch
-    3. weather
+    3. weather //done
     4. forced repeat move
     5. delayed moves/effects
 

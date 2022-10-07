@@ -39,8 +39,9 @@ const moveEffectObject = {
     ["hydro-pump"]: (move, user, enemy) => { //done
         //no effect
     },
-    ["rain-dance"]: (move, user, enemy) => {
-        //no effect
+    ["rain-dance"]: (move, user, enemy) => { //done
+        textEvent.push("It started to rain")
+        weather = {name:"rain", turns:5}
     },
     ["aqua-tail"]: (move, user, enemy) => { //done
         //no effect
@@ -53,7 +54,6 @@ const moveEffectObject = {
     },
     ["inferno"]: (move, user, enemy) => { //done
         //Inflicts regular damage. Has a $effect_chance% chance to burn the target.
-        
         applyStatus(enemy, "burn")
     },
     ["dragon-breath"]: (move, user, enemy) => { //done
@@ -84,18 +84,40 @@ const moveEffectObject = {
         //Has a $effect_chance% chance to poison the target
         if (Math.random() < move.effect_chance/100) applyStatus(enemy, "poison")
     },
-    ["curse"]: (move, user, enemy) => {
-        //no effect
-        textEvent.push("curse currently does absolutely nothing")
+    ["curse"]: (move, user, enemy) => { //done
+        //
+        user.hp -= Math.ceil(user.stats.hp / 2)
+        enemy.condition = {name:"curse"}
+        textEvent.push(`${user.name} cursed ${enemy.name}`)
     },
-    ["dark-pulse"]: (move, user, enemy) => {
+    ["dark-pulse"]: (move, user, enemy) => { //done
         //Has a $effect_chance% chance to make the target flinch.
+        if (user.turnOrder === "first" && Math.random() < move.effect_chance/100) {
+            enemy.skipTurn = "true"
+            textEvent.push(`${enemy.name} flinched`)
+        }
     },
     ["dragon-dance"]: (move, user, enemy) => { //done
         //no effect
     },
-    ["thrash"]: (move, user, enemy) => {
+    ["thrash"]: (move, user, enemy) => { //done
         //Hits every turn for 2-3 turns, then confuses the user.
+        if (!user.forcedMove.length){
+            //adding one extra forced turn so im able to check when I only have one 
+            //forced turn left and then trigger an event to stop and cause confusion
+            const forcedTimes = Math.floor(Math.random() * 2) + 2 
+            for (let i = 0; i < forcedTimes; i++){
+                user.forcedMove.push(move)
+            }
+        }
+        else if (user.forcedMove.length === 1) {
+            const confuseTurns = Math.floor(Math.random() * 4) + 2  
+            user.forcedMove.shift()
+            if (!user.condition.name){
+                user.condition = {name:"confuse", turns:confuseTurns}
+                textEvent.push(`${user.name} became confused`)
+            }
+        }
     },
     ["crunch"]: (move, user, enemy) => { //done
         //no effect
@@ -138,11 +160,24 @@ const moveEffectObject = {
         //no effect
     },
     ["solar-beam"]: (move, user, enemy) => { //do later , its 12:33am
-        //Requires a turn to charge before attacking.
+        if (weather.name){
+            if (weather.name === "harsh sunlight") return
+            else {
+                damage *= 0.5
+            }
+        } else if (!user.forcedMove.length) {
+            textEvent.push("Gathering sunlight")
+            user.forcedMove.push(move)
+            user.forcedMove.push(move)
+            damage = 0
+        } //if none of these conditions where met then just use the move
     },
     ["synthesis"]: (move, user, enemy) => { //half done
         //Heals the user by half its max HP. Affected by weather.
-        heal(50, user)
+        if (weather.name){
+            if (weather.name === "harsh sunlight") heal(200/3, user)
+            else heal(25, user)
+        } else heal(50, user)
     },
     ["seed-bomb"]: (move, user, enemy) => { //done
         //no effect
@@ -151,8 +186,8 @@ const moveEffectObject = {
         //Puts the target to sleep.
         applyStatus(enemy, "sleep")
     },
-    ["hail"]: (move, user, enemy) => { 
-        //Changes the weather to a hailstorm for five turns.
+    ["hail"]: (move, user, enemy) => {  //done
+        weather = {name:"hail", turns:5}
 
     },
     ["blizzard"]: (move, user, enemy) => { //technically half done
@@ -165,4 +200,9 @@ const moveEffectObject = {
         damage *= 2
         
     },
+    ["sunny-day"]: (move, user, enemy) => {  //done
+        weather = {name:"harsh sunlight", turns:5}
+
+    }
+
 }

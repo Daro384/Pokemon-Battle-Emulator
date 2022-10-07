@@ -230,7 +230,8 @@ const showMoves = move => {
     moveInfo.style.backgroundColor = "greenyellow"
 
     moveNameDetail.addEventListener("click", event => {
-        battleEventOrder({move:userPokemon[0].moves[move]})
+        userPokemon[0]["decision"] = {move:userPokemon[0].moves[move]}
+        battleEventOrder()
     })
 }
 
@@ -259,9 +260,12 @@ const showSwitchSelect = () => {
             pokeHealth.textContent = userPokemon[i].hp + " HP/" + userPokemon[i].stats.hp + " HP"
             pokemonSlot.append(pokeHealth)
 
-            if (i){ //cant switch to current pokemon and current pokemon is always at index 1
-            const decisionObject = {switch:userPokemon[i].name}
-            pokemonSlot.addEventListener("click", event => battleEventOrder(decisionObject))
+            if (i){ //cant switch to current pokemon and current pokemon is always at index 0
+                pokemonSlot.addEventListener("click", event => {
+                    userPokemon[0]["decision"] = {switch:userPokemon[i].name}
+                    userPokemon[i]["decision"] = {switch:userPokemon[i].name}  
+                    battleEventOrder()
+                })
             }
         }
     }
