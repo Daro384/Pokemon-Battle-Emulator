@@ -631,11 +631,6 @@ const battleEventOrder = async () => {
     showMainSelect()
 }
 
-
-
-
-
-
 document.addEventListener("DOMContentLoaded", event => {
     getDamageRelation()
     const pickArray = document.getElementById("selectPokemon")
@@ -649,5 +644,8 @@ document.addEventListener("DOMContentLoaded", event => {
         
         pickArray.append(pickPokemon)
         pickPokemon.addEventListener("click", event => pickingPokemon(event, pickArray)) 
+        pickPokemon.addEventListener("mouseover", event => {
+            console.log(pokemonInfo[Object.keys(pokemon)[0]].name)
+        })
     })
 })

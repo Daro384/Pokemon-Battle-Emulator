@@ -176,8 +176,12 @@ const showMoveSelect =  () => {
         power.textContent = "Power: " + userPokemon[0].moves[move].power
         pokemonMove.append(power)
         
-        pokemonMove.addEventListener("click", event => {
+        pokemonMove.addEventListener("mouseover", event => {
             showMoves(move)
+        })
+        pokemonMove.addEventListener("click", event => {
+            userPokemon[0]["decision"] = {move:userPokemon[0].moves[move]}
+            battleEventOrder()
         })
 
     }
@@ -228,11 +232,6 @@ const showMoves = move => {
     moveInfo.append(accuracyDetails)
     moveInfo.append(effectText     )
     moveInfo.style.backgroundColor = "greenyellow"
-
-    moveNameDetail.addEventListener("click", event => {
-        userPokemon[0]["decision"] = {move:userPokemon[0].moves[move]}
-        battleEventOrder()
-    })
 }
 
 const showSwitchSelect = () => {
