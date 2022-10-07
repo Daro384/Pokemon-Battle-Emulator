@@ -659,11 +659,9 @@ document.addEventListener("DOMContentLoaded", event => {
             const nameBar= document.getElementById("nameA")
             nameBar.textContent= nameA
 
-            const evBar = document.getElementById("ev")
-            evBar.textContent= "EV: " + ev
+            const evBar = document.getElementById("moves")
+            evBar.textContent= "Moves: " + Object.keys(pokemonInfo[Object.keys(pokemon)[0]].moves).join(', ')
 
-            const ivBar= document.getElementById("iv")
-            ivBar.textContent= "IV: " + iv
 
             const attackBar= document.getElementById("attack")
             attackBar.textContent= "Attcak: " + attack
@@ -679,6 +677,8 @@ document.addEventListener("DOMContentLoaded", event => {
 
             const speedBar= document.getElementById("speed")
             speedBar.textContent= "Speed: " + speed
+
+            console.log(pokemonInfo[Object.keys(pokemon)[0]].moves)
    
         })
         
