@@ -180,8 +180,10 @@ const showMoveSelect =  () => {
             showMoves(move)
         })
         pokemonMove.addEventListener("click", event => {
-            userPokemon[0]["decision"] = {move:userPokemon[0].moves[move]}
-            battleEventOrder()
+            if (userPokemon[0].moves[move].pp){
+                userPokemon[0]["decision"] = {move:userPokemon[0].moves[move]}
+                battleEventOrder()
+            }
         })
 
     }

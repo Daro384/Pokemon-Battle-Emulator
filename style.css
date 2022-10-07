@@ -1,3 +1,6 @@
+h1 {
+  text-align: center;
+}
 #selectPokemon {
     overflow-y: auto;
     margin: 1rem 0;
@@ -13,11 +16,15 @@
 #selectedPokemon > img{
   border-style:solid;
   border-color:red;
+  width: 240px;
+  height: 240px;
 }
 
 #selectPokemon > img{
   border-style:solid;
   border-color:black;
+  width: 200px;
+  height: 200px;
 }
 
 #lockIn {
@@ -203,8 +210,7 @@ h2 {
 
 #sideBar {
   width:300px;
-  height:800px;
+  height:1000px;
   text-align:center;
   float:left;
-  
 }
