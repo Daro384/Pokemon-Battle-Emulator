@@ -5,9 +5,22 @@ const textEvent = []
 let moves
 let userPokemon
 let computerPokemon
-let weather
+let weather = {name:"", turns:0}
 let critChance = 1/24
 let damage
+
+const pokemonList = [ 
+    {alakazam: ["calm-mind", "psychic", "psyshock", "recover"],           img:"./assets/alakazam.jpg"}, 
+    {blastoise:["iron-defense", "hydro-pump", "rain-dance", "aqua-tail"], img: "./assets/blastoise.jpg"}, 
+    {charizard:["flare-blitz", "inferno", "dragon-breath", "scary-face"], img: "./assets/charizard.jpg"},
+    {gardevoir:["calm-mind", "hypnosis", "dream-eater", "psychic"],       img: "./assets/gardevoir.jpg"},
+    {gengar:   ["shadow-ball", "sludge-bomb", "curse", "dark-pulse"],     img: "./assets/gengar.jpg"},
+    {gyarados: ["dragon-dance", "thrash", "aqua-tail", "crunch"],         img: "./assets/gyarados.jpg"},
+    {machamp:  ["double-edge", "cross-chop", "bulk-up", "revenge"],       img: "./assets/machamp.jpg"},
+    {snorlax:  ["rest", "belly-drum", "body-slam", "hammer-arm"],         img: "./assets/snorlax.jpg"},
+    {venusaur: ["solar-beam", "synthesis", "seed-bomb", "sunny-day"],     img: "./assets/venusaur.jpg"},
+    {walrein:  ["hail", "blizzard", "brine", "rest"],                     img: "./assets/walrein.jpg"},
+]
 
 
 const statCalculator = (base, IV, EV, level, stat) => {
@@ -101,7 +114,8 @@ const createPokemonObject = (name, level, moves, sourceIMG) => {
         pokemonObject["EV"] = EV
         pokemonObject["img"] = sourceIMG
         pokemonObject["status"] = {}
-        pokemonObject["condition"]
+        pokemonObject["condition"] = {}
+        pokemonObject["forcedMove"] = []
         
     })  
     return pokemonObject
@@ -157,6 +171,16 @@ const recoil = (recoilPercent, userObject) => {
     userObject.hp -= Math.ceil(damage * recoilPercent/100)
 }
 
+const weatherMultiplier = (moveType, weatherName) => {
+    let weatherMultiplier = 1
+    if (weatherName) return weatherMultiplier
+    if (weather === "harsh sunlight" && moveType === "fire") weatherMultiplier  = 1.5
+    if (weather === "harsh sunlight" && moveType === "water") weatherMultiplier = 1/1.5
+    if (weather === "rain"           && moveType === "water") weatherMultiplier = 1.5
+    if (weather === "rain"           && moveType === "fire") weatherMultiplier  = 1/1.5
+    return weatherMultiplier
+} 
+
 const stageMultiplier = stage => { //calculates the stat multiplier based on your stat stage
     return (stage >= 0 ? 1+0.5*stage : 1/(1+0.5*Math.abs(stage))) 
 }
@@ -182,7 +206,10 @@ const calculateDamageMultipliers = (move, userObject, targetObject) => {
     }
     let burn
     (move.damageClass === "physical" && userObject.status.name === "burn") ? burn = 0.5 : burn = 1
-    return stab * effectiveness * critMultiplier * burn
+
+    const weatherMulti = weatherMultiplier(move.type, weather.name)
+
+    return stab * effectiveness * critMultiplier * burn * weatherMulti
 }
 
 const applyStatChanges = (move, userObject, targetObject) => { 
@@ -217,7 +244,6 @@ const applyStatChanges = (move, userObject, targetObject) => {
     }
 }
 
-
 const useMove = async (move, user, enemy) => {
     damage = 0
     critChance = 1/24
@@ -240,22 +266,8 @@ const useMove = async (move, user, enemy) => {
     moveEffectObject[move.name](move, user, enemy) //applying potential unique effects
 
     enemy.hp -= Math.ceil(damage) //apply the damage to the targets health
-
+    move.pp -= 1
 }
-
-const pokemonList = [ 
-    {alakazam: ["calm-mind", "psychic", "psyshock", "recover"],           img:"./assets/alakazam.jpg"}, 
-    {blastoise:["iron-defense", "hydro-pump", "rain-dance", "aqua-tail"], img: "./assets/blastoise.jpg"}, 
-    {charizard:["flare-blitz", "inferno", "dragon-breath", "scary-face"], img: "./assets/charizard.jpg"},
-    {gardevoir:["calm-mind", "hypnosis", "dream-eater", "psychic"],       img: "./assets/gardevoir.jpg"},
-    {gengar:   ["shadow-ball", "sludge-bomb", "curse", "dark-pulse"],     img: "./assets/gengar.jpg"},
-    {gyarados: ["dragon-dance", "thrash", "aqua-tail", "crunch"],         img: "./assets/gyarados.jpg"},
-    {machamp:  ["double-edge", "cross-chop", "bulk-up", "revenge"],       img: "./assets/machamp.jpg"},
-    {snorlax:  ["rest", "belly-drum", "body-slam", "hammer-arm"],         img: "./assets/snorlax.jpg"},
-    {venusaur: ["solar-beam", "synthesis", "seed-bomb", "sleep-powder"],  img: "./assets/venusaur.jpg"},
-    {walrein:  ["hail", "blizzard", "brine", "rest"],                     img: "./assets/walrein.jpg"},
-]
-
 
 const createPokemonTeam = selectedPokemon => {
     const pokemonTeam = []
@@ -333,8 +345,71 @@ const lostCheck = () => {
     
 }
 
+const weatherEffect = () => {
+    if (!weather.name) return
+    switch (weather.name) {
+        case "harsh sunlight":
+            weather.turns -= 1
+            if (weather.turns <= 0) {
+                weather.name = ""
+                textEvent.push(`The harsh sunlight faded`)
+            } else textEvent.push(`The sunlight is strong`)
+        break
+
+        case "hail":
+            if (!userPokemon[0].type.includes("ice")) {
+                userPokemon.hp -= userPokemon[0].stats.hp / 16
+                textEvent.push(`${userPokemon[0].name} got buffeted by the hail`)
+            }
+            if (!computerPokemon[0].type.includes("ice")) {
+                computerPokemon[0].hp -= computerPokemon[0].stats.hp / 16
+                textEvent.push(`${computerPokemon[0].name} got buffeted by the hail`)
+            }
+            weather.turns -= 1
+            if (weather.turns <= 0) {
+                weather.name = ""
+                textEvent.push(`The hail stopped`)
+            } else textEvent.push(`The hail continues to fall`)
+            break
+        case "rain":
+
+            weather.turns -= 1
+            if (weather.turns <= 0) {
+                weather.name = ""
+                textEvent.push(`The rain stopped`)
+            } else textEvent.push(`Rhe rain continues to fall`)
+            break
+        case "sandstorm": 
+
+            let includes
+            userPokemon[0].type.forEach(type => {
+                if (["rock", "steel", "ground"].includes(type)) includes = true
+            })
+            if (!includes) {
+                userPokemon.hp -= userPokemon[0].stats.hp / 16
+                textEvent.push(`${userPokemon[0].name} got buffeted by the sandstorm`)
+            }
+
+            includes = false
+            computerPokemon[0].type.forEach(type => {
+                if (["rock", "steel", "ground"].includes(type)) includes = true
+            })
+            if (!includes) {
+                computerPokemon.hp -= computerPokemon[0].stats.hp / 16
+                textEvent.push(`${userPokemon[0].name} got buffeted by the sandstorm`)
+            }
+            weather.turns -= 1
+            if (weather.turns <= 0) {
+                weather.name = ""
+                textEvent.push(`The sandstorm subsided`)
+            } else textEvent.push(`The sandstorm rages`)
+    }
+
+}
+
 const statusEffect = (pokemonObject, move) => {
     //status effects are: sleep, freeze, paralysis, burn, poison, badly poison
+    if (!pokemonObject.status.name) return //check if status effect exist
     switch (pokemonObject.status.name) {
         case "sleep":
             pokemonObject.status.turns--
@@ -383,115 +458,194 @@ const statusEffect = (pokemonObject, move) => {
 }
 
 const conditionEffect = pokemonObject => {
-    //does something
+    if (!pokemonObject.condition.name) return //check if condition effect exist
+    switch (pokemonObject.condition.name) {
+        case "confuse":
+            pokemonObject.condition.turns -= 1
+            if (pokemonObject.condition.turns === 0) {
+                pokemonObject.condition.name = ""
+                pokemonObject["skipTurn"] = false
+                textEvent.push(pokemonObject.name +" is no longer confused")
+            }
+            textEvent.push(pokemonObject.name +" is confused")
+            if (1/3 > Math.random()) {
+                const damage = calculateDamage({power:40}, pokemonObject, pokemonObject)
+                pokemonObject.hp -= Math.ceil(damage)
+                textEvent.push(pokemonObject.name +" hurt them self in confusion")
+                pokemonObject["skipTurn"] = true
+            }
+            break
+        case "curse":
+            const damage = pokemonObject.stats.hp / 4
+            pokemonObject.hp -= Math.ceil(damage)
+            textEvent.push(pokemonObject.name + " is cursed and lost some health")
+            break
+    }
 }
 
-const battleEventOrder = async userDecision => {
-    //activate pokemon switch if pokemon dies or show victory if no more pokemon
-    const computerMove = computerAI()
+const whichPokemon = (string) => { //string has to be either faster or slower, then this function will return that pokemon
+    const computerDecision = computerPokemon[0]["decision"]
+    const userDecision = userPokemon[0]["decision"]
 
-    if (userDecision.switch) {
-        textEvent.push("User switched to " + userDecision.switch)
-        const index = userPokemon.findIndex(pokemon => pokemon.name === userDecision.switch)
-        const pokemonObject = userPokemon.splice(index, 1)
-        userPokemon.unshift(pokemonObject[0])
-        await displayEvent()
-        updateBattleWindow()
-    }
-    if (weather) {
-        textEvent.push("It is " + "weather")
-        await displayEvent()
-    }
-    
-    //figuring out which player goes first
     const userSpeed = userPokemon[0].stats.speed * stageMultiplier(userPokemon[0]["stat-stages"].speed)
     const computerSpeed = computerPokemon[0].stats.speed * stageMultiplier(computerPokemon[0]["stat-stages"].speed)
 
-    const playerMove = [userDecision.move, computerMove]
-    const player = [userPokemon, computerPokemon] //so I can select player based on 0 or 1 (used to be able to select the faster player)
-    let first
+    let faster
+    let slower
 
     if (userDecision.move) {
-        if (userDecision.move.priority > computerMove.priority) {
-            first = 0 //first = user
-        } else if (userDecision.move.priority < computerMove.priority) {
-            first = 1 //first = computer
+        if (userDecision.move.priority > computerDecision.move.priority) {
+            faster = userPokemon[0]
+            userPokemon[0]["turnOrder"] = "first"
+            slower = computerPokemon[0]
+            computerPokemon[0]["turnOrder"] = "second"
+        } else if (userDecision.move.priority < computerDecision.move.priority) {
+            faster = computerPokemon[0]
+            computerPokemon[0]["turnOrder"] = "first"
+            slower = userPokemon[0]
+            userPokemon[0]["turnOrder"] = "second"
         } else if (userSpeed > computerSpeed) {
-            first = 0
-        } else first = 1 //if computer has the same or higher speed
-    } else first = 0
-
-    const second = first => {
-        if (first === 0) {
-            return 1
-        } else return 0
+            faster = userPokemon[0]
+            userPokemon[0]["turnOrder"] = "first"
+            slower = computerPokemon[0]
+            computerPokemon[0]["turnOrder"] = "second"
+        } else { //if computer has the same or higher speed (which means on a tie we will prioritize the computer)
+            faster = computerPokemon[0]
+            computerPokemon[0]["turnOrder"] = "first"
+            slower = userPokemon[0]
+            userPokemon[0]["turnOrder"] = "second"
+        }
+    } else { //if user choses to switch pokemon then user goes first
+        faster = userPokemon[0]
+        userPokemon[0]["turnOrder"] = "first"
+        slower = computerPokemon[0]
+        computerPokemon[0]["turnOrder"] = "second"
     }
 
-    const fasterPokemon = player[first][0]
-    const slowerPokemon = player[second(first)][0]
-    const fasterMove = playerMove[first]
-    let slowerMove = playerMove[second(first)]
-    let showSwitch = false //switch to true if user pokemon dies 
+    if (string === "faster") return faster
+    else return slower
+}
+
+const reactToFaint = async () => { //checks if any pokemon "faints" and then respond to it
+    if (computerPokemon[0].hp <= 0) {
+        computerPokemon[0]["skipTurn"] = true //stops recently "fainted" pokemon from using a move
+        textEvent.push(`${computerPokemon[0].name} fainted`)
+        computerPokemon.push(computerPokemon[0]) //put "fainted" pokemon last in array
+        computerPokemon.splice(0,1) //remove "fainted" pokemon
+        if (computerPokemon[0].hp <= 0) { //if next pokemon is "fainted" gg computer ran out of pokemon
+            textEvent.push(`computer ran out of usable pokemon`)
+            await displayEvent()
+            endScreen("YOU WIN! ")
+            return true //Tell daddy function to quit
+        }
+    } else if (userPokemon[0].hp <= 0) {
+        textEvent.push(`${userPokemon[0].name} fainted`)
+        if (lostCheck()) { //check if all your pokemon are "fainted"
+            textEvent.push("you ran out of usable pokemon")
+            await displayEvent()
+            endScreen("YOU LOSE! ")
+            return true
+        } else {
+            await displayEvent()
+            userPokemon[0].forcedSwitch = true //storing that this is a forced switch
+            showSwitchSelect()
+            document.getElementById("theReturnButton").remove()
+            return true
+        }
+    }
+
+}
+
+const moveTurn = async (user, target) => {
+    if (user.decision.switch) return
+    const move = user.decision.move
     
-    const moveTurn = async (pokemonUser, targetPokemon, move) => {
-        if (!move) return
-        statusEffect(pokemonUser, move)
-        conditionEffect(pokemonUser)
-        if (!pokemonUser.skipTurn){
-            await useMove(move, pokemonUser, targetPokemon)
-            pokemonUser.skipTurn = false
+    if (!user.skipTurn) {
+    statusEffect(user, move)
+    await displayEvent()
+    updateBattleWindow()
+    if (await reactToFaint()) return true //reactToFaint will only return true if a pokemon dies
+    }
+
+    if (!user.skipTurn) {
+    conditionEffect(user)
+    await displayEvent()
+    updateBattleWindow()
+    if (await reactToFaint()) return true
+    }
+
+    if (!user.skipTurn){ 
+        await useMove(move, user, target)
+        await displayEvent()
+        updateBattleWindow()
+        if (await reactToFaint()) return true
+    }
+
+    user.skipTurn = false
+    await displayEvent()
+    updateBattleWindow()
+}
+
+const battleEventOrder = async () => {
+    //activate pokemon switch if pokemon dies or show victory if no more pokemon
+    computerPokemon[0]["decision"] = {move:computerAI()} //computerAI figures out a move to use
+    const computerDecision = computerPokemon[0]["decision"]
+    const userDecision = userPokemon[0]["decision"]
+
+    if (userDecision.switch) {
+        const forced = userPokemon[0].forcedSwitch //storing if the switch was forced
+        textEvent.push("User switched to " + userDecision.switch)
+        const index = userPokemon.findIndex(pokemon => pokemon.name === userDecision.switch)
+        const pokemonObject = userPokemon.splice(index, 1) //move selected pokemon to the 0th index in the pokemonArray
+        userPokemon.unshift(pokemonObject[0])
+        await displayEvent()
+        updateBattleWindow()
+        if (forced) {
+            showMainSelect()
+            return
         }
+    }
 
-        if (targetPokemon.hp <= 0) {
-            slowerMove = false //stopping dead pokemon from using move
-            textEvent.push(`${targetPokemon.name} fainted`)
-            if (computerPokemon[0].hp <= 0) { //checks if computer pokemon fainted
-                computerPokemon.push(computerPokemon[0]) 
-                computerPokemon.splice(0,1) //rotates computers pokemon
-                if (computerPokemon[0].hp <= 0) {
-                    await displayEvent()
-                    endScreen("Computer ran out of pokemon. YOU WIN! ") 
-                    return true
-                } else textEvent.push("Computer sent out " + computerPokemon[0].name)
+    const faster = whichPokemon("faster")
+    const slower = whichPokemon("slower")
 
-            } 
-            else if (userPokemon[0].hp <= 0) {
-                if (lostCheck()) { //if all pokemon are dead
-                    await displayEvent()
-                    endScreen("you ran out of pokemon. YOU LOSE! ")
-                    return true
-                } else { //if only current pokemon dies
-                    showSwitch = true
-                }
-            }
-        }
-
+    if (weather.name) {
+        weatherEffect()
         await displayEvent()
         updateBattleWindow()
     }
     
-    if (await moveTurn(fasterPokemon, slowerPokemon, fasterMove)) return //moveTurn will only return true if game ends!!!
-    if (await moveTurn(slowerPokemon, fasterPokemon, slowerMove)) return //return to exit out of battle loop
+    if (await moveTurn(faster, slower)) return //moveTurn will only return true if game ends!!!
+    if (await moveTurn(slower, faster)) return //return to exit out of battle loop
 
-    if (showSwitch) {
-        showSwitchSelect()
-        document.getElementById("theReturnButton").remove()
+    if (userPokemon[0].forcedMove.length) {
+        userPokemon[0]["decision"] = {move:userPokemon[0].forcedMove[0]}
+        userPokemon[0].forcedMove.shift()
+        battleEventOrder()
     }
-    else showMainSelect()
+    if (computerPokemon[0].forcedMove.length) {
+        computerPokemon[0]["decision"] = {move:computerPokemon[0].forcedMove[0]}
+        computerPokemon[0].forcedMove.shift()
+        battleEventOrder()
+    }
+    showMainSelect()
 }
 
 document.addEventListener("DOMContentLoaded", event => {
     getDamageRelation()
     const pickArray = document.getElementById("selectPokemon")
     pokemonList.forEach(pokemon => {
+        
         const name = Object.keys(pokemon)[0]
         pokemonInfo[name] = createPokemonObject(name, 50, pokemon[name], pokemon.img)
         const pickPokemon = document.createElement("img")
         pickPokemon.src = pokemon.img
         pickPokemon.alt = name
-
+        
         pickArray.append(pickPokemon)
-
-        pickPokemon.addEventListener("click", event => pickingPokemon(event, pickArray))
+        pickPokemon.addEventListener("click", event => pickingPokemon(event, pickArray)) 
+        pickPokemon.addEventListener("mouseover", event => {
+            console.log(pokemonInfo[Object.keys(pokemon)[0]].name)
+        })
     })
 })
