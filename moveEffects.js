@@ -14,7 +14,6 @@ const moveEffectObject = {
     ["rest"]:(move, user, enemy) => { //done
         applyStatus(user, "sleep", 2, true)
         heal(100, user)
-        textEvent.push(`${user.name} used fully restored their HP`)
     },
     ["calm-mind"]: (move, user, enemy) => { //done
         //no effect
@@ -139,7 +138,9 @@ const moveEffectObject = {
     ["revenge"]: (move, user, enemy) => { //not done but done for now
         //Inflicts double damage if the user takes damage before attacking this turn.
         //gonna intentionally change the effect of this move because the original effect is too much of a pain to code
-        if (user.hp !== user.stats.hp) damage *= 2
+        if (enemy.decision.move.damageClass != "status" && enemy.turnOrder === "first") {
+            damage *= 2
+        }
 
     },
     ["belly-drum"]: (move, user, enemy) => { //done
@@ -170,7 +171,10 @@ const moveEffectObject = {
             user.forcedMove.push(move)
             user.forcedMove.push(move)
             damage = 0
-        } //if none of these conditions where met then just use the move
+        } else {
+            user.forcedMove.shift()
+        }
+        //if none of these conditions where met then just use the move
     },
     ["synthesis"]: (move, user, enemy) => { //half done
         //Heals the user by half its max HP. Affected by weather.
@@ -202,7 +206,99 @@ const moveEffectObject = {
     },
     ["sunny-day"]: (move, user, enemy) => {  //done
         weather = {name:"harsh sunlight", turns:5}
+        textEvent.push("the sun shines brighter")
+    },
+    ["discharge"]: (move, user, enemy) => { //done
+        if (Math.random() < move.effect_chance/100) applyStatus(enemy, "paralysis")
 
-    }
+    },
+    ["thunder"]: (move, user, enemy) => { //done
+        if (Math.random() < move.effect_chance/100) applyStatus(enemy, "paralysis")
+
+    },
+    ["swagger"]: (move, user, enemy) => { //done
+        const confuseTurns = Math.floor(Math.random() * 4) + 2  
+        enemy.condition = {name:"confuse", turns:confuseTurns}
+        textEvent.push(`${enemy.name} became confused`)
+    },
+    ["thunder-wave"]: (move, user, enemy) => { //done
+        applyStatus(enemy, "paralysis")
+    },
+    ["supersonic"]: (move, user, enemy) => { //done
+        const confuseTurns = Math.floor(Math.random() * 4) + 2  
+        enemy.condition = {name:"confuse", turns: confuseTurns}
+        textEvent.push(`${enemy.name} became confused`)
+    },
+    ["toxic"]: (move, user, enemy) => { //done
+        applyStatus(enemy, "badlyPoison")
+    },
+    ["air-slash"]: (move, user, enemy) => { //done
+        if (user.turnOrder === "first" && Math.random() < move.effect_chance/100) {
+            enemy.skipTurn = "true"
+            textEvent.push(`${enemy.name} flinched`)
+        }
+    },
+    ["venoshock"]: (move, user, enemy) => { //done
+        if (enemy.status.name === "poison" || enemy.status.name === "badlyPoison") {
+            damage *= 2
+        }
+    },
+    ["x-scissor"]: (move, user, enemy) => { //done
+        //no extra effect
+    },
+    ["swords-dance"]: (move, user, enemy) => { //done
+        //no extra effect
+    },
+    ["iron-head"]: (move, user, enemy) => { //done
+        if (user.turnOrder === "first" && Math.random() < move.effect_chance/100) {
+            enemy.skipTurn = "true"
+            textEvent.push(`${enemy.name} flinched`)
+        }
+    },
+    ["sucker-punch"]: (move, user, enemy) => { 
+        console.log(enemy.decision.move.damageClass)
+        if (enemy.decision.move.damageClass === "status") {
+            textEvent.push(`${move.name} failed`)
+            damage = 0
+        }
+
+    },
+    ["payback"]: (move, user, enemy) => { 
+        if (enemy.decision.move.damageClass != "status" && enemy.turnOrder === "first") {
+            damage *= 2
+        }
+    },
+    ["quick-attack"]: (move, user, enemy) => { 
+        //no extra effect
+    },
+    ["dragon-claw"]: (move, user, enemy) => { 
+        //no extra effect
+    },
+    ["aerial-ace"]: (move, user, enemy) => { 
+        //cannot miss
+    },
+    ["flamethrower"]: (move, user, enemy) => { 
+        if (Math.random() < move.effect_chance/100) applyStatus(enemy, "burn")
+    },
+    ["outrage"]: (move, user, enemy) => { 
+        //Hits every turn for 2-3 turns, then confuses the user.
+        if (!user.forcedMove.length){
+            //adding one extra forced turn so im able to check when I only have one 
+            //forced turn left and then trigger an event to stop and cause confusion
+            const forcedTimes = Math.floor(Math.random() * 2) + 2 
+            for (let i = 0; i < forcedTimes; i++){
+                user.forcedMove.push(move)
+            }
+        }
+        else if (user.forcedMove.length === 1) {
+            const confuseTurns = Math.floor(Math.random() * 4) + 2  
+            user.forcedMove.shift()
+            if (!user.condition.name){
+                user.condition = {name:"confuse", turns:confuseTurns}
+                textEvent.push(`${user.name} became confused`)
+            }
+        }
+    },
+    
 
 }

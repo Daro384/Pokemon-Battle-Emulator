@@ -10,16 +10,21 @@ let critChance = 1/24
 let damage
 
 const pokemonList = [ 
-    {alakazam: ["calm-mind", "psychic", "psyshock", "recover"],           img:"./assets/alakazam.jpg"}, 
-    {blastoise:["iron-defense", "hydro-pump", "rain-dance", "aqua-tail"], img: "./assets/blastoise.jpg"}, 
-    {charizard:["flare-blitz", "inferno", "dragon-breath", "scary-face"], img: "./assets/charizard.jpg"},
-    {gardevoir:["calm-mind", "hypnosis", "dream-eater", "psychic"],       img: "./assets/gardevoir.jpg"},
-    {gengar:   ["shadow-ball", "sludge-bomb", "curse", "dark-pulse"],     img: "./assets/gengar.jpg"},
-    {gyarados: ["dragon-dance", "thrash", "aqua-tail", "crunch"],         img: "./assets/gyarados.jpg"},
-    {machamp:  ["double-edge", "cross-chop", "bulk-up", "revenge"],       img: "./assets/machamp.jpg"},
-    {snorlax:  ["rest", "belly-drum", "body-slam", "hammer-arm"],         img: "./assets/snorlax.jpg"},
-    {venusaur: ["solar-beam", "synthesis", "seed-bomb", "sunny-day"],     img: "./assets/venusaur.jpg"},
-    {walrein:  ["hail", "blizzard", "brine", "rest"],                     img: "./assets/walrein.jpg"},
+    {venusaur: ["solar-beam", "synthesis", "seed-bomb", "sunny-day"],        img: "./assets/venusaur.jpg"},
+    {charizard:["flare-blitz", "inferno", "dragon-breath", "scary-face"],    img: "./assets/charizard.jpg"},
+    {blastoise:["iron-defense", "hydro-pump", "rain-dance", "aqua-tail"],    img: "./assets/blastoise.jpg"}, 
+    {alakazam: ["calm-mind", "psychic", "psyshock", "recover"],              img:"./assets/alakazam.jpg"},
+    {gengar:   ["shadow-ball", "sludge-bomb", "curse", "dark-pulse"],        img: "./assets/gengar.jpg"},
+    {gyarados: ["dragon-dance", "thrash", "aqua-tail", "crunch"],            img: "./assets/gyarados.jpg"},
+    {machamp:  ["double-edge", "cross-chop", "bulk-up", "revenge"],          img: "./assets/machamp.jpg"},
+    {snorlax:  ["rest", "belly-drum", "body-slam", "hammer-arm"],            img: "./assets/snorlax.jpg"},
+    {walrein:  ["hail", "blizzard", "brine", "rest"],                        img: "./assets/walrein.jpg"},
+    {jolteon:  ["discharge", "thunder", "swagger", "thunder-wave"],          img: "./assets/jolteon.jpg"},
+    {gardevoir:["calm-mind", "hypnosis", "dream-eater", "psychic"],          img: "./assets/gardevoir.jpg"},
+    {crobat:   ["supersonic", "toxic", "air-slash", "venoshock"],            img: "./assets/crobat.jpg"},
+    {scizor:   ["iron-defense", "x-scissor", "swords-dance", "iron-head"],   img: "./assets/scizor.png"},
+    {absol:    ["sucker-punch", "payback", "swords-dance", "quick-attack"],  img: "./assets/absol.jpg"},
+    {salamence:["dragon-claw", "aerial-ace", "outrage", "flamethrower"],     img: "./assets/salamence.jpg"},
 ]
 
 
@@ -141,6 +146,8 @@ const applyStatus = (targetObject, statusName, turns, ignore = false) => {
         if (statusName === "sleep"){
             if (!turns) turns = (Math.ceil(Math.random() * 4) + 1) //if turns is omitted then randomly assign 2-5 turns
             else targetObject.status["turns"] = turns
+        } else if (statusName === "badlyPoison") {
+            targetObject.status["stacks"] = 1
         }
     } else textEvent.push(`applying ${statusName} failed`)
 }
@@ -377,7 +384,7 @@ const weatherEffect = () => {
             if (weather.turns <= 0) {
                 weather.name = ""
                 textEvent.push(`The rain stopped`)
-            } else textEvent.push(`Rhe rain continues to fall`)
+            } else textEvent.push(`The rain continues to fall`)
             break
         case "sandstorm": 
 
@@ -410,6 +417,7 @@ const weatherEffect = () => {
 const statusEffect = (pokemonObject, move) => {
     //status effects are: sleep, freeze, paralysis, burn, poison, badly poison
     if (!pokemonObject.status.name) return //check if status effect exist
+    let statusDamage
     switch (pokemonObject.status.name) {
         case "sleep":
             pokemonObject.status.turns--
@@ -439,18 +447,18 @@ const statusEffect = (pokemonObject, move) => {
             }
             break
         case "burn": 
-            let damage = Math.ceil(pokemonObject.stats.hp / 16)
-            pokemonObject.hp -= damage
+            statusDamage = Math.ceil(pokemonObject.stats.hp / 16)
+            pokemonObject.hp -= statusDamage
             textEvent.push(pokemonObject.name +" is hurt from burn")
             break
         case "poison": 
-            damage = Math.ceil(pokemonObject.stats.hp / 16)
-            pokemonObject.hp -= damage
+            statusDamage = Math.ceil(pokemonObject.stats.hp / 16)
+            pokemonObject.hp -= statusDamage
             textEvent.push(pokemonObject.name +" is hurt from poison")
             break
         case "badlyPoison":
-            damage = Math.ceil(pokemonObject.stats.hp * pokemonObject.status.stacks / 16)
-            pokemonObject.hp -= damage
+            statusDamage = Math.ceil(pokemonObject.stats.hp * pokemonObject.status.stacks / 16)
+            pokemonObject.hp -= statusDamage
             pokemonObject.status.stacks ++
             textEvent.push(pokemonObject.name +" is hurt from poison")
             break
@@ -465,7 +473,7 @@ const conditionEffect = pokemonObject => {
             if (pokemonObject.condition.turns === 0) {
                 pokemonObject.condition.name = ""
                 pokemonObject["skipTurn"] = false
-                textEvent.push(pokemonObject.name +" is no longer confused")
+                textEvent.push(pokemonObject.name +" snapped out of confusion")
             }
             textEvent.push(pokemonObject.name +" is confused")
             if (1/3 > Math.random()) {
@@ -487,8 +495,13 @@ const whichPokemon = (string) => { //string has to be either faster or slower, t
     const computerDecision = computerPokemon[0]["decision"]
     const userDecision = userPokemon[0]["decision"]
 
-    const userSpeed = userPokemon[0].stats.speed * stageMultiplier(userPokemon[0]["stat-stages"].speed)
-    const computerSpeed = computerPokemon[0].stats.speed * stageMultiplier(computerPokemon[0]["stat-stages"].speed)
+    let paralysisSlowUser = 1
+    if (userPokemon[0].status.name === "paralysis") paralysisSlowUser = 1/1.5
+    let paralysisSlowComputer = 1
+    if (computerPokemon[0].status.name === "paralysis") paralysisSlowComputer = 1/1.5
+
+    const userSpeed = userPokemon[0].stats.speed * stageMultiplier(userPokemon[0]["stat-stages"].speed) * paralysisSlowUser
+    const computerSpeed = computerPokemon[0].stats.speed * stageMultiplier(computerPokemon[0]["stat-stages"].speed) * paralysisSlowComputer
 
     let faster
     let slower
@@ -641,11 +654,9 @@ document.addEventListener("DOMContentLoaded", event => {
         const pickPokemon = document.createElement("img")
         pickPokemon.src = pokemon.img
         pickPokemon.alt = name
+        pickPokemon.className = "pokemonIcons"
         
         pickArray.append(pickPokemon)
         pickPokemon.addEventListener("click", event => pickingPokemon(event, pickArray)) 
-        pickPokemon.addEventListener("mouseover", event => {
-            console.log(pokemonInfo[Object.keys(pokemon)[0]].name)
-        })
     })
 })
