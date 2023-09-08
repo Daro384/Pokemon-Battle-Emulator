@@ -7,5 +7,3 @@ This website is going to have a center window where you can play a turn based po
     * The enemy pokemon on his turn will select a random move on his turn (to simulate an AI playing)  
     * This repeats until your or the computer pokemon's hp goes to 0.  
     * The player either wins or loses, and gets the choice to play again.  
-
-![IMG_20220930_140932](https://user-images.githubusercontent.com/99115851/193343120-c1eea0ff-0ead-4890-9638-021f22ec32ca.jpg)
